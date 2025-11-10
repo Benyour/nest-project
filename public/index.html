@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>采购订单接口验证</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>采购订单接口验证</h1>
+      <p>启动 Nest 服务后，使用下方页面直接操作后端 CRUD 接口。</p>
+      <button id="refresh-btn">刷新订单列表</button>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>已有采购订单</h2>
+        <div id="orders-empty" class="empty-state">暂无数据，请先新增采购订单。</div>
+        <table id="orders-table" class="hidden">
+          <thead>
+            <tr>
+              <th>订单编号</th>
+              <th>供应商</th>
+              <th>下单日期</th>
+              <th>含税金额</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>创建采购订单</h2>
+        <form id="create-form">
+          <div class="grid">
+            <label>
+              订单编号
+              <input name="orderCode" placeholder="例如：PO-2025-0001" required />
+            </label>
+            <label>
+              供应商名称
+              <input name="supplierName" placeholder="例如：上海智采供应链" required />
+            </label>
+            <label>
+              供应商联系人
+              <input name="supplierContact" placeholder="可选" />
+            </label>
+            <label>
+              联系电话
+              <input name="supplierPhone" placeholder="可选" />
+            </label>
+            <label>
+              下单日期
+              <input type="date" name="orderDate" required />
+            </label>
+            <label>
+              预计到货日期
+              <input type="date" name="expectedArrivalDate" />
+            </label>
+            <label>
+              税率 %
+              <input type="number" name="taxRate" value="13" step="0.01" min="0" />
+            </label>
+            <label>
+              币种
+              <input name="currency" value="CNY" />
+            </label>
+            <label>
+              状态
+              <input name="status" value="draft" />
+            </label>
+          </div>
+
+          <label class="textarea-label">
+            订单明细（JSON 数组）
+            <textarea
+              id="items-json"
+              name="items"
+              rows="8"
+              required
+              spellcheck="false"
+            >[
+  {
+    "skuCode": "MAT-001",
+    "skuName": "高速螺丝",
+    "quantity": 100,
+    "unitPrice": 2.35,
+    "deliveryDate": "2025-01-18"
+  }
+]</textarea>
+            <small>至少一条，支持一次提交多条，可按需增加字段（例如 specification、remarks）。</small>
+          </label>
+
+          <label>
+            备注
+            <textarea name="remarks" rows="2"></textarea>
+          </label>
+
+          <button type="submit">提交创建</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>订单详情</h2>
+        <div id="detail-area" class="empty-state">点击列表中的“查看”加载详情。</div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="script.js" type="module"></script>
+  </body>
+</html>
+
