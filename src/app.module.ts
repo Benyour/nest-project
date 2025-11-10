@@ -1,32 +1,47 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import configuration, { AppConfigType } from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [configuration],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const url = configService.get<string>('DATABASE_URL');
-        const sslEnabled = configService.get<string>('DATABASE_SSL', 'true');
+      useFactory: (
+        configService: ConfigService<{ app: AppConfigType }, true>,
+      ) => {
+        const appConfig = configService.getOrThrow<AppConfigType>('app');
+        const {
+          url,
+          synchronize = false,
+          logging = false,
+          ssl = false,
+        } = appConfig.database;
+
+        if (!url) {
+          throw new Error('DATABASE_URL is not configured');
+        }
 
         return {
           type: 'postgres',
           url,
           autoLoadEntities: true,
-          synchronize: false,
-          logging: true,
-          ssl: sslEnabled === 'true' ? { rejectUnauthorized: false } : false,
+          synchronize,
+          logging,
+          ssl: ssl ? { rejectUnauthorized: false } : false,
         };
       },
     }),
-    PurchaseOrdersModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -41,8 +41,11 @@ interface PurchaseOrderResponse {
   items: PurchaseOrderItemResponse[];
 }
 
+type SupertestTarget = Parameters<typeof request>[0];
+
 describe('PurchaseOrdersModule (e2e)', () => {
   let app: INestApplication;
+  let server: SupertestTarget;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -67,6 +70,7 @@ describe('PurchaseOrdersModule (e2e)', () => {
       }),
     );
     await app.init();
+    server = app.getHttpServer() as SupertestTarget;
   });
 
   afterAll(async () => {
@@ -105,7 +109,7 @@ describe('PurchaseOrdersModule (e2e)', () => {
   };
 
   it('POST /purchase-orders -> 201', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(server)
       .post(baseUrl)
       .send(createPayload)
       .expect(201);
@@ -134,9 +138,7 @@ describe('PurchaseOrdersModule (e2e)', () => {
   });
 
   it('GET /purchase-orders -> 200 & list contains created order', async () => {
-    const response = await request(app.getHttpServer())
-      .get(baseUrl)
-      .expect(200);
+    const response = await request(server).get(baseUrl).expect(200);
 
     const list = response.body as PurchaseOrderResponse[];
 
@@ -148,7 +150,7 @@ describe('PurchaseOrdersModule (e2e)', () => {
   });
 
   it('GET /purchase-orders/:id -> 200 & returns detail', async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(server)
       .get(`${baseUrl}/${createdId}`)
       .expect(200);
 
@@ -181,7 +183,7 @@ describe('PurchaseOrdersModule (e2e)', () => {
       ],
     };
 
-    const response = await request(app.getHttpServer())
+    const response = await request(server)
       .patch(`${baseUrl}/${createdId}`)
       .send(updatePayload)
       .expect(200);
@@ -198,12 +200,8 @@ describe('PurchaseOrdersModule (e2e)', () => {
   });
 
   it('DELETE /purchase-orders/:id -> 200 & removes order', async () => {
-    await request(app.getHttpServer())
-      .delete(`${baseUrl}/${createdId}`)
-      .expect(200);
+    await request(server).delete(`${baseUrl}/${createdId}`).expect(200);
 
-    await request(app.getHttpServer())
-      .get(`${baseUrl}/${createdId}`)
-      .expect(404);
+    await request(server).get(`${baseUrl}/${createdId}`).expect(404);
   });
 });
