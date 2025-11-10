@@ -1,7 +1,7 @@
 # 项目进度日志
 
-- **当前阶段**：M1 Day2（分类/位置模块基础）
-- **整体进度**：约 30%
+- **当前阶段**：M1 Day3（物品模块基础）
+- **整体进度**：约 40%
 
 ## 2025-11-10
 - [M0 Day1] 新增 `src/config/configuration.ts`，集中管理环境变量，读取数据库、JWT、Redis、RabbitMQ 配置
@@ -31,3 +31,7 @@
 - [M1 Day2] 编写 `CategoriesService`、`LocationsService` 单元测试，覆盖父子解析、自引用校验、阻止删除含子节点等关键分支
 - [M1 Day2] 新增 `test/categories.e2e-spec.ts`、`test/locations.e2e-spec.ts`，验证 REST 接口的创建/查询/删除流程及错误返回结构
 - [M1 Day2] 执行 `npm run lint`、`npm run test`、`npm run test:e2e`，确保新增模块在单元与端到端维度全部通过
+- [M1 Day3] 新增物品领域：`Item` 实体、创建/更新/列表 DTO、`ItemsService` 与 `ItemsController`，支持分类与默认位置关联、编码唯一校验、关键字过滤
+- [M1 Day3] 将 `ItemsModule` 纳入 `AppModule`，并在 `docs` 中更新阶段进度
+- [M1 Day3] 编写 `ItemsService` 单元测试，覆盖编码重复、分类缺失、更新逻辑等场景；新增 `test/items.e2e-spec.ts` 验证完整 REST 流程
+- [M1 Day3] 执行 `npm run lint`、`npm run test`、`npm run test:e2e`，确认物品模块在单元与端到端层面通过
