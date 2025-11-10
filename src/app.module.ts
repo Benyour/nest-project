@@ -11,6 +11,7 @@ import { LocationsModule } from './modules/locations/locations.module';
 import { ItemsModule } from './modules/items/items.module';
 import { StockModule } from './modules/stock/stock.module';
 import { PurchaseRecordsModule } from './modules/purchase-records/purchase-records.module';
+import { UsageRecordsModule } from './modules/usage-records/usage-records.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { PurchaseRecordsModule } from './modules/purchase-records/purchase-recor
     ItemsModule,
     StockModule,
     PurchaseRecordsModule,
+    UsageRecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
