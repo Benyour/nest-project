@@ -126,50 +126,71 @@
 ## 5. 库存（物品清单）
 ### 5.1 当前库存查询
 - **GET** `/stock`
-  - Query：`itemId, locationId, categoryId, lowStockOnly=true`
+  - Query：`itemId, locationId, lowStockOnly`
 - Response：
   ```json
   {
     "success": true,
     "data": [
       {
+        "id": "uuid",
         "item": { "id": "...", "name": "大米" },
         "location": { "id": "...", "name": "厨房" },
         "quantity": 8.5,
-        "unit": "kg",
         "minQuantity": 2,
-        "expiryDate": "2025-01-20",
-        "latestPurchaseDate": "2025-01-10"
+        "latestPurchaseDate": "2025-01-10",
+        "expiryDate": "2025-01-20"
       }
     ]
   }
   ```
 
-### 5.2 库存调整
-- **POST** `/stock/:id/adjust`
+### 5.2 创建 / 更新 / 删除
+- **POST** `/stock`
   ```json
   {
-    "quantityAfter": 10,
-    "reason": "manual_audit",
-    "remarks": "盘点修正"
+    "itemId": "uuid",
+    "locationId": "uuid",
+    "quantity": 10,
+    "minQuantity": 2,
+    "latestPurchasePrice": 12.5,
+    "latestPurchaseDate": "2025-01-01",
+    "expiryDate": "2025-02-01",
+    "memo": "初始入库"
   }
   ```
-- Response：调整记录
+- **PATCH** `/stock/:id`
+- **DELETE** `/stock/:id`
+
+### 5.3 库存调整与历史
+- **POST** `/stock/:id/adjustments`（返回 HTTP 200）
+  ```json
+  {
+    "type": "usage",
+    "delta": -1.5,
+    "reason": "daily",
+    "remarks": "早餐制作",
+    "createdById": "uuid"
+  }
+  ```
+- **GET** `/stock/:id/adjustments`：按时间倒序返回调整记录
 
 ---
 
 ## 6. 采购记录
 ### 6.1 列表 & 详情
 - **GET** `/purchase-records`
-  - Query：`status, startDate, endDate, storeId, keyword`
 - **GET** `/purchase-records/:id`
 
-### 6.2 创建采购记录
+### 6.2 创建采购记录（草稿）
 - **POST** `/purchase-records`
   ```json
   {
+    "code": "PO-20250101-001",
+    "createdById": "uuid",
     "purchaseDate": "2025-01-15",
-    "storeId": "uuid",
+    "storeName": "永辉超市",
+    "storeType": "offline",
     "remarks": "周末采购",
     "items": [
       {
@@ -183,15 +204,29 @@
     ]
   }
   ```
-- Response：创建后的完整记录（状态默认为 draft）
+- 返回：完整草稿记录（`status = draft`）
+- 备注：`code` 唯一；若未指定 `totalPrice` 将自动计算
 
-### 6.3 状态流转
-- **PATCH** `/purchase-records/:id/confirm`
-- **PATCH** `/purchase-records/:id/cancel`
-- 备注：确认操作使用事务更新库存，返回最新库存信息
+### 6.3 更新 / 删除
+- **PATCH** `/purchase-records/:id`
+  - 仅 `draft` 状态可更新，可整体替换明细
+- **DELETE** `/purchase-records/:id`
+  - 仅 `draft` 状态可删除
 
-### 6.4 删除
-- **DELETE** `/purchase-records/:id`（仅 draft 可删）
+### 6.4 确认采购
+- **POST** `/purchase-records/:id/confirm`（返回 HTTP 200）
+  ```json
+  {
+    "confirmedById": "uuid",
+    "remarks": "已验收入库"
+  }
+  ```
+- 说明：在事务中更新库存，如无库存记录则新建后调整；生成采购类型的库存调整记录
+
+### 6.5 状态说明
+- `draft`：草稿，可编辑/删除
+- `confirmed`：已确认，库存已更新，禁止修改
+- `cancelled`：预留状态，尚未开放
 
 ---
 

@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -71,6 +72,7 @@ export class StockController {
   }
 
   @Post(':id/adjustments')
+  @HttpCode(200)
   @ApiOperation({ summary: '调整库存数量' })
   @ApiOkResponse({ description: '调整完成后返回最新库存信息' })
   @ApiBadRequestResponse({ description: '调整后数量为负数或参数错误' })

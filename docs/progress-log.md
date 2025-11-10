@@ -1,7 +1,7 @@
 # 项目进度日志
 
-- **当前阶段**：M1 Day3（物品模块基础）
-- **整体进度**：约 40%
+- **当前阶段**：M1 Day4（库存/采购记录）
+- **整体进度**：约 55%
 
 ## 2025-11-10
 - [M0 Day1] 新增 `src/config/configuration.ts`，集中管理环境变量，读取数据库、JWT、Redis、RabbitMQ 配置
@@ -35,3 +35,7 @@
 - [M1 Day3] 将 `ItemsModule` 纳入 `AppModule`，并在 `docs` 中更新阶段进度
 - [M1 Day3] 编写 `ItemsService` 单元测试，覆盖编码重复、分类缺失、更新逻辑等场景；新增 `test/items.e2e-spec.ts` 验证完整 REST 流程
 - [M1 Day3] 执行 `npm run lint`、`npm run test`、`npm run test:e2e`，确认物品模块在单元与端到端层面通过
+- [M1 Day4] 完成库存模块重构：`StockService` 支持事务内调用、操作者用户外键、低库存筛选；`StockController` 提供列表/详情/调整/历史接口并以 200 返回状态；补齐 `stock.service.spec.ts` 与 `test/stock.e2e-spec.ts`
+- [M1 Day4] 新增采购记录模块：`PurchaseRecord`/`PurchaseRecordItem` 实体、DTO、Service、Controller，确认采购时组合事务更新库存；新增 Service 单测与 `test/purchase-records.e2e-spec.ts` 验证整体流程
+- [M1 Day4] 调整 `AppModule` 引入 `PurchaseRecordsModule`，多次执行 `npm run lint`、`npm run test`、`npm run test:e2e`，所有测试通过
+g

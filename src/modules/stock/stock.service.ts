@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Item } from '../items/entities/item.entity';
 import { Location } from '../locations/entities/location.entity';
 import { User } from '../users/entities/user.entity';
@@ -57,8 +57,23 @@ export class StockService {
     return qb.getMany();
   }
 
-  async findOne(id: string): Promise<Stock> {
-    const stock = await this.stockRepository.findOne({
+  private getStockRepository(manager?: EntityManager) {
+    return manager ? manager.getRepository(Stock) : this.stockRepository;
+  }
+
+  private getAdjustmentRepository(manager?: EntityManager) {
+    return manager
+      ? manager.getRepository(StockAdjustment)
+      : this.adjustmentRepository;
+  }
+
+  private getUserRepository(manager?: EntityManager) {
+    return manager ? manager.getRepository(User) : this.usersRepository;
+  }
+
+  async findOne(id: string, manager?: EntityManager): Promise<Stock> {
+    const repository = this.getStockRepository(manager);
+    const stock = await repository.findOne({
       where: { id },
       relations: ['item', 'location'],
     });
@@ -108,11 +123,15 @@ export class StockService {
     }
   }
 
-  private async ensureUser(userId?: string): Promise<User | null> {
+  private async ensureUser(
+    userId?: string,
+    manager?: EntityManager,
+  ): Promise<User | null> {
     if (!userId) {
       return null;
     }
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const repository = this.getUserRepository(manager);
+    const user = await repository.findOne({ where: { id: userId } });
     if (!user) {
       throw new BadRequestException(`User ${userId} not found`);
     }
@@ -135,13 +154,14 @@ export class StockService {
       memo: dto.memo ?? null,
     });
 
-    const saved = await this.stockRepository.save(stock);
+    const saved = await this.getStockRepository().save(stock);
 
     await this.createAdjustment(
       saved,
       StockAdjustmentType.MANUAL,
       0,
       dto.quantity,
+      undefined,
       {
         reason: 'initial_create',
         remarks: dto.memo ?? null,
@@ -176,6 +196,7 @@ export class StockService {
           StockAdjustmentType.MANUAL,
           stock.quantity,
           newQuantity,
+          undefined,
           {
             reason: 'manual_update',
             remarks: dto.memo ?? null,
@@ -207,13 +228,15 @@ export class StockService {
     type: StockAdjustmentType,
     quantityBefore: number,
     quantityAfter: number,
+    manager: EntityManager | undefined,
     extra: {
       reason?: string | null;
       remarks?: string | null;
       createdBy?: User | null;
     },
   ): Promise<StockAdjustment> {
-    const adjustment = this.adjustmentRepository.create({
+    const repository = this.getAdjustmentRepository(manager);
+    const adjustment = repository.create({
       stock,
       type,
       quantityBefore,
@@ -223,11 +246,21 @@ export class StockService {
       remarks: extra.remarks ?? null,
       createdBy: extra.createdBy ?? null,
     });
-    return this.adjustmentRepository.save(adjustment);
+    return repository.save(adjustment);
   }
 
-  async adjustQuantity(id: string, dto: AdjustStockDto): Promise<Stock> {
-    const stock = await this.findOne(id);
+  async adjustQuantity(
+    id: string,
+    dto: AdjustStockDto,
+    manager?: EntityManager,
+  ): Promise<Stock> {
+    const repository = this.getStockRepository(manager);
+    const stock = await repository.findOne({ where: { id } });
+
+    if (!stock) {
+      throw new NotFoundException(`Stock ${id} not found`);
+    }
+
     const quantityBefore = stock.quantity;
     const quantityAfter = Number((quantityBefore + dto.delta).toFixed(2));
 
@@ -235,7 +268,7 @@ export class StockService {
       throw new BadRequestException('Resulting quantity cannot be negative');
     }
 
-    const createdBy = await this.ensureUser(dto.createdById);
+    const createdBy = await this.ensureUser(dto.createdById, manager);
 
     stock.quantity = quantityAfter;
 
@@ -244,6 +277,7 @@ export class StockService {
       dto.type,
       quantityBefore,
       quantityAfter,
+      manager,
       {
         reason: dto.reason ?? null,
         remarks: dto.remarks ?? null,
@@ -251,7 +285,7 @@ export class StockService {
       },
     );
 
-    return this.stockRepository.save(stock);
+    return repository.save(stock);
   }
 
   async listAdjustments(stockId: string): Promise<StockAdjustment[]> {

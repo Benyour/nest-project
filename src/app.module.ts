@@ -10,6 +10,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { ItemsModule } from './modules/items/items.module';
 import { StockModule } from './modules/stock/stock.module';
+import { PurchaseRecordsModule } from './modules/purchase-records/purchase-records.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { StockModule } from './modules/stock/stock.module';
     LocationsModule,
     ItemsModule,
     StockModule,
+    PurchaseRecordsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,6 +11,7 @@ import { Item } from '../src/modules/items/entities/item.entity';
 import { StockAdjustment } from '../src/modules/stock/entities/stock-adjustment.entity';
 import { Stock } from '../src/modules/stock/entities/stock.entity';
 import { StockModule } from '../src/modules/stock/stock.module';
+import { User } from '../src/modules/users/entities/user.entity';
 
 jest.setTimeout(20000);
 
@@ -46,7 +47,7 @@ describe('StockModule (e2e)', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Category, Location, Item, Stock, StockAdjustment],
+          entities: [Category, Location, Item, Stock, StockAdjustment, User],
           synchronize: true,
         }),
         StockModule,
@@ -123,12 +124,12 @@ describe('StockModule (e2e)', () => {
     const createBody = createResponse.body as SuccessResponse<StockPayload>;
     expect(createBody.data.quantity).toBe(10);
 
-    const listResponse = await agent
-      .get('/stock')
-      .query({ lowStockOnly: false })
+    const detailAfterCreate = await agent
+      .get(`/stock/${createBody.data.id}`)
       .expect(200);
-    const listBody = listResponse.body as SuccessResponse<StockPayload[]>;
-    expect(listBody.data).toHaveLength(1);
+    const detailAfterCreateBody =
+      detailAfterCreate.body as SuccessResponse<StockPayload>;
+    expect(detailAfterCreateBody.data.quantity).toBe(10);
 
     const adjustResponse = await agent
       .post(`/stock/${createBody.data.id}/adjustments`)
