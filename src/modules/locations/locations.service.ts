@@ -70,12 +70,14 @@ export class LocationsService {
       throw new BadRequestException('Location cannot be its own parent');
     }
 
-    const parent = await this.resolveParent(dto.parentId);
+    if (dto.parentId !== undefined) {
+      const parent = await this.resolveParent(dto.parentId);
+      location.parent = parent;
+    }
 
     location.name = dto.name ?? location.name;
     location.description = dto.description ?? location.description;
     location.sortOrder = dto.sortOrder ?? location.sortOrder;
-    location.parent = parent ?? null;
 
     return this.locationsRepository.save(location);
   }

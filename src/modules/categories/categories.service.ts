@@ -70,12 +70,14 @@ export class CategoriesService {
       throw new BadRequestException('Category cannot be its own parent');
     }
 
-    const parent = await this.resolveParent(dto.parentId);
+    if (dto.parentId !== undefined) {
+      const parent = await this.resolveParent(dto.parentId);
+      category.parent = parent;
+    }
 
     category.name = dto.name ?? category.name;
     category.icon = dto.icon ?? category.icon;
     category.sortOrder = dto.sortOrder ?? category.sortOrder;
-    category.parent = parent ?? null;
 
     return this.categoriesRepository.save(category);
   }

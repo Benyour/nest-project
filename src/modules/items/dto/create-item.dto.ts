@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsInt,
   IsOptional,
@@ -48,6 +49,7 @@ export class CreateItemDto {
 
   @ApiPropertyOptional({ description: '保质期（天）' })
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   shelfLifeDays?: number;
