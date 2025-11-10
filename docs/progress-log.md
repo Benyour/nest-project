@@ -1,7 +1,7 @@
 # 项目进度日志
 
-- **当前阶段**：M1 Day1（认证模块-注册/登录）
-- **整体进度**：约 15%
+- **当前阶段**：M1 Day2（分类/位置模块基础）
+- **整体进度**：约 30%
 
 ## 2025-11-10
 - [M0 Day1] 新增 `src/config/configuration.ts`，集中管理环境变量，读取数据库、JWT、Redis、RabbitMQ 配置
@@ -25,3 +25,9 @@
   - DTO（注册、登录）、JWT 策略、守卫、CurrentUser 装饰器
 - [M1 Day1] 在 `AppModule` 中引入 `AuthModule`，`npm run build` 通过，验证编译无误
 - [M1 Day1] 新增 e2e 测试 `test/auth.e2e-spec.ts`，覆盖注册→登录→获取当前用户流程，`npm run test:e2e` 全部通过
+- [M1 Day2] 新增分类领域：实体、DTO、Service、Controller 及 `CategoriesModule`，支持父子层级、排序、Swagger 文档描述，禁止删除含子分类
+- [M1 Day2] 新增位置领域：实体、DTO、Service、Controller 及 `LocationsModule`，支持父子层级、描述、排序，沿用删除前的子节点校验
+- [M1 Day2] 更新 `AppModule` 注册分类与位置模块，进而在全局 TypeORM 注册中自动加载实体
+- [M1 Day2] 编写 `CategoriesService`、`LocationsService` 单元测试，覆盖父子解析、自引用校验、阻止删除含子节点等关键分支
+- [M1 Day2] 新增 `test/categories.e2e-spec.ts`、`test/locations.e2e-spec.ts`，验证 REST 接口的创建/查询/删除流程及错误返回结构
+- [M1 Day2] 执行 `npm run lint`、`npm run test`、`npm run test:e2e`，确保新增模块在单元与端到端维度全部通过
