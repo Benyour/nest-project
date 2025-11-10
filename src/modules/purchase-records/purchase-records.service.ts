@@ -227,24 +227,34 @@ export class PurchaseRecordsService {
     await this.dataSource.transaction(async (manager) => {
       const supportsLock = manager.connection.options.type !== 'sqlite';
 
-      const items = await manager.find(PurchaseRecordItem, {
-        where: { record: { id } },
-        relations: ['item', 'location'],
-        ...(supportsLock
-          ? { lock: { mode: 'pessimistic_write' as const } }
-          : {}),
-      });
+      const itemRepository = manager.getRepository(PurchaseRecordItem);
+      const itemsQb = itemRepository
+        .createQueryBuilder('recordItem')
+        .innerJoinAndSelect('recordItem.item', 'item')
+        .innerJoinAndSelect('recordItem.location', 'location')
+        .where('recordItem.recordId = :id', { id });
+
+      if (supportsLock) {
+        itemsQb.setLock('pessimistic_write');
+      }
+
+      const items = await itemsQb.getMany();
 
       for (const item of items) {
-        let stock = await manager.findOne(Stock, {
-          where: {
-            item: { id: item.item.id },
-            location: { id: item.location.id },
-          },
-          ...(supportsLock
-            ? { lock: { mode: 'pessimistic_write' as const } }
-            : {}),
-        });
+        const stockRepository = manager.getRepository(Stock);
+
+        const stockQb = stockRepository
+          .createQueryBuilder('stock')
+          .where('stock.itemId = :itemId', { itemId: item.item.id })
+          .andWhere('stock.locationId = :locationId', {
+            locationId: item.location.id,
+          });
+
+        if (supportsLock) {
+          stockQb.setLock('pessimistic_write');
+        }
+
+        let stock = await stockQb.getOne();
 
         if (!stock) {
           stock = manager.create(Stock, {

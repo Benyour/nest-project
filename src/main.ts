@@ -7,9 +7,32 @@ import { AppModule } from './app.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { ConfigService } from '@nestjs/config';
+import { AppConfigType } from './config/configuration';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  const configService = app.get<ConfigService<{ app: AppConfigType }, true>>(
+    ConfigService,
+  );
+  const appConfig = configService.getOrThrow<AppConfigType>('app');
+  const { cors } = appConfig;
+
+  if (cors.enabled) {
+    const origin =
+      cors.origins.length === 1 && cors.origins[0] === '*'
+        ? true
+        : cors.origins;
+
+    app.enableCors({
+      origin,
+      credentials: cors.credentials,
+      methods: cors.methods.join(','),
+      allowedHeaders: cors.allowedHeaders.join(','),
+      exposedHeaders: cors.exposedHeaders.join(','),
+    });
+  }
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
@@ -38,7 +61,7 @@ async function bootstrap() {
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, swaggerDocument);
 
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+  const port = appConfig.port ?? 3000;
   await app.listen(port);
   Logger.log(`Application running on http://localhost:${port}`);
   Logger.log(`Swagger UI available at http://localhost:${port}/docs`);

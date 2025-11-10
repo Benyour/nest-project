@@ -1,13 +1,14 @@
-# 家庭物品管家系统 API 规格
+# 家庭物品管家系统 API 规格（与当前实现对齐）
 
 > 版本：v1.0  
 > 对应需求：`docs/requirements.md`  
-> 说明：本规格为后端 REST API 概要描述，详细字段以 Swagger（OpenAPI）为准。
+> 更新日期：2025-11-10  
+> 说明：本文档同步至最新代码实现，描述现有后端 REST API。即将开发或规划中的接口请参考需求文档与产品规划。
 
 ---
 
 ## 1. 约定与通用规则
-- **基础 URL**：`/api/v1`
+- **基础 URL**：`/`（当前服务未设置全局前缀）
 - **认证方式**：HTTP Header `Authorization: Bearer <token>`（除公开接口外均需）
 - **请求格式**：JSON，`Content-Type: application/json`
 - **响应格式**：
@@ -30,7 +31,7 @@
   ```
 - **分页参数**：`page`（默认1）、`limit`（默认10）、`sort`（`field,DESC`）
 - **时间格式**：ISO8601（`YYYY-MM-DDTHH:mm:ss.sssZ`），日期字段用 `YYYY-MM-DD`
-- **Swagger 地址**：`/api/v1/docs`
+- **Swagger 地址**：`/docs`
 
 ---
 
@@ -62,20 +63,18 @@
 - Request：`{ "email": "...", "password": "..." }`
 - Response：`{ accessToken, refreshToken, expiresIn }`
 
-### 2.3 刷新 Token
-- **POST** `/auth/refresh`
-- Request：`{ "refreshToken": "..." }`
-- Response：新 Access Token
-
-### 2.4 获取当前用户
+### 2.3 获取当前用户
 - **GET** `/auth/me`
 - Response：用户信息（含角色、头像等）
+
+> **说明**：当前实现尚未提供 Refresh Token 接口；如需新增请在后续迭代中补充。
 
 ---
 
 ## 3. 分类与位置
 ### 3.1 分类
-- **GET** `/categories`：列表（支持级联、分页）
+- **GET** `/categories`：返回完整树结构（不分页）
+- **GET** `/categories/:id`：分类详情
 - **POST** `/categories`
   ```json
   {
@@ -85,18 +84,21 @@
   }
   ```
 - **PATCH** `/categories/:id`
-- **DELETE** `/categories/:id`
+- **DELETE** `/categories/:id`（若存在子分类将返回 400）
 
 ### 3.2 位置
-- 接口与分类类似：`/locations`
-- 支持 `parentId` 建立层级（如厨房 → 橱柜上层）
+- **GET** `/locations`：返回完整树结构（不分页）
+- **GET** `/locations/:id`：位置详情
+- **POST** `/locations`
+- **PATCH** `/locations/:id`
+- **DELETE** `/locations/:id`（若存在子位置将返回 400）
 
 ---
 
 ## 4. 物品管理
-### 4.1 物品列表
+### 4.1 物品
 - **GET** `/items`
-  - Query：`page, limit, categoryId, keyword, tagIds`
+  - Query：`page, limit, categoryId, locationId, keyword`
 - **GET** `/items/:id`
 - **POST** `/items`
   ```json
@@ -114,16 +116,12 @@
   ```
 - **PATCH** `/items/:id`
 - **DELETE** `/items/:id`
-- **POST** `/items/:id/attachments`：上传图片（`multipart/form-data`）
 
-### 4.2 标签管理
-- **GET** `/tags`
-- **POST** `/tags`：`{ "name": "常用" }`
-- **DELETE** `/tags/:id`
+> **说明**：当前版本尚未实现标签、附件上传等扩展接口。
 
 ---
 
-## 5. 库存（物品清单）
+## 5. 库存
 ### 5.1 当前库存查询
 - **GET** `/stock`
   - Query：`itemId, locationId, lowStockOnly`
@@ -231,7 +229,6 @@
 ---
 
 ## 7. 使用记录
-（结构类似采购记录）
 - **GET** `/usage-records`
 - **GET** `/usage-records/:id`
 - **POST** `/usage-records`
@@ -250,165 +247,28 @@
     ]
   }
   ```
-- **PATCH** `/usage-records/:id/confirm`
-- **PATCH** `/usage-records/:id/cancel`
+- **PATCH** `/usage-records/:id`
+- **DELETE** `/usage-records/:id`
+- **POST** `/usage-records/:id/confirm`（返回 HTTP 200）
+
+> **说明**：当前版本尚未实现取消使用记录的接口；如需恢复库存请通过库存调整接口处理。
 
 ---
 
-## 8. 购物清单
-- **GET** `/shopping-lists`
-- **GET** `/shopping-lists/:id`
-- **POST** `/shopping-lists`
-  ```json
-  {
-    "name": "周末采购清单",
-    "items": [
-      { "itemId": "uuid", "suggestedQuantity": 3 }
-    ],
-    "remarks": "自动生成的清单"
-  }
-  ```
-- **PATCH** `/shopping-lists/:id`
-- **DELETE** `/shopping-lists/:id`
-- **POST** `/shopping-lists/:id/items/:itemId/complete`：标记已购买
+## 8. 用户调试接口
+- **GET** `/users`：返回所有用户（临时调试用途，生产环境建议移除或加权限）
 
 ---
 
-## 9. 商店管理
-- **GET** `/stores`
-- **POST** `/stores`
-  ```json
-  {
-    "name": "永辉超市",
-    "type": "offline",
-    "contact": "张经理",
-    "phone": "010-12345678",
-    "address": "北京市..."
-  }
-  ```
-- **PATCH** `/stores/:id`
-- **DELETE** `/stores/:id`
+## 9. 系统根路径（调试）
+- **GET** `/`：返回健康测试字符串
+- **GET** `/zhang`：返回调试信息
+
+> **说明**：以上两个接口用于早期功能验证，生产环境可考虑关闭或改为健康检查。
 
 ---
 
-## 10. 提醒与通知
-### 10.1 提醒列表
-- **GET** `/notifications`
-  - Query：`type, status`
-- Response：
-  ```json
-  {
-    "data": [
-      {
-        "id": "uuid",
-        "type": "low_stock",
-        "level": "warning",
-        "title": "快用完了",
-        "message": "大米库存少于 2kg",
-        "status": "unread",
-        "createdAt": "2025-01-21T09:00:00Z"
-      }
-    ]
-  }
-  ```
-
-### 10.2 设置提醒为已读
-- **PATCH** `/notifications/:id/read`
-
-### 10.3 批量处理
-- **POST** `/notifications/read`
-  ```json
-  { "ids": ["uuid1", "uuid2"] }
-  ```
-
----
-
-## 11. 仪表盘 & 统计
-### 11.1 仪表盘
-- **GET** `/dashboard`
-  - Response
-    ```json
-    {
-      "data": {
-        "totalItems": 42,
-        "lowStockCount": 3,
-        "expiringCount": 2,
-        "monthlyExpense": 560.5,
-        "inventoryValue": 3200.8,
-        "pendingNotifications": 5,
-        "charts": {
-          "monthlyExpense": [...],
-          "categoryDistribution": [...]
-        }
-      }
-    }
-    ```
-
-### 11.2 消费统计
-- **GET** `/statistics/expense`
-  - Query：`startDate, endDate, groupBy=month/category/store`
-
-### 11.3 物品使用分析
-- **GET** `/statistics/usage`
-
-### 11.4 库存分析
-- **GET** `/statistics/inventory`
-
----
-
-## 12. 整理核对（盘点）
-- **GET** `/stock-audits`
-- **POST** `/stock-audits`
-  ```json
-  {
-    "name": "厨房年度盘点",
-    "locations": ["uuid"],
-    "items": ["uuid"],
-    "remarks": "春节前盘点"
-  }
-  ```
-- **GET** `/stock-audits/:id`
-- **POST** `/stock-audits/:id/submit`
-  ```json
-  {
-    "items": [
-      {
-        "stockId": "uuid",
-        "quantityActual": 5,
-        "remarks": "实物为 5kg"
-      }
-    ]
-  }
-  ```
-- **POST** `/stock-audits/:id/confirm`：应用差异、生成调整记录
-
----
-
-## 13. 文件导入导出
-- **POST** `/imports/items`：上传 Excel（`multipart/form-data`）
-- **GET** `/exports/items`：导出 Excel/CSV
-- **GET** `/imports/:id/status`：查询导入任务状态
-
----
-
-## 14. 系统管理
-- **GET** `/settings`：读取系统配置（提醒提前天数、阈值）
-- **PATCH** `/settings`：更新配置
-- **GET** `/health`：健康检查（数据库、Redis、MQ 状态）
-
----
-
-## 15. WebSocket 事件（概览）
-| 事件 | 方向 | 说明 |
-| --- | --- | --- |
-| `notifications.lowStock` | 服务端 → 客户端 | 低库存提醒推送 |
-| `notifications.expiry` | 服务端 → 客户端 | 快过期提醒推送 |
-| `shoppingList.updated` | 服务端 → 客户端 | 购物清单变更 |
-| `stock.updated` | 服务端 → 客户端 | 库存数量变化 |
-
----
-
-## 16. 错误码示例
+## 10. 错误码示例
 | 业务场景 | 错误码 | HTTP 状态 | 描述 |
 | --- | --- | --- | --- |
 | 认证失败 | `AUTH-001` | 401 | 用户不存在或密码错误 |
@@ -417,8 +277,10 @@
 | 物品不存在 | `ITEM-404` | 404 | 指定物品不存在 |
 | 库存不足 | `STOCK-001` | 400 | 库存数量不足 |
 | 状态非法 | `PROC-002` | 400 | 当前状态不允许操作 |
-| 导入失败 | `IMPORT-001` | 500 | Excel 解析失败 |
 
 ---
 
-> 备注：实际接口细节、字段、示例、错误码请以 Swagger 文档与实现代码为准。
+> 备注：  
+> - 当前版本仅实现上述接口，其余规划功能（标签、购物清单、通知、仪表盘等）仍在需求阶段。  
+> - 实际字段与示例以 Swagger 文档与实现代码为准。  
+> - 新增接口或行为变更后，请同步更新本文档。
