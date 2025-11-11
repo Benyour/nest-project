@@ -9,6 +9,7 @@ import { StockAdjustment } from '../stock/entities/stock-adjustment.entity';
 import { Stock } from '../stock/entities/stock.entity';
 import { StockService } from '../stock/stock.service';
 import { User, UserStatus } from '../users/entities/user.entity';
+import { Tag } from '../tags/entities/tag.entity';
 import { PurchaseRecordItemDto } from './dto/purchase-record-item.dto';
 import { CreatePurchaseRecordDto } from './dto/create-purchase-record.dto';
 import { ConfirmPurchaseRecordDto } from './dto/confirm-purchase-record.dto';
@@ -46,6 +47,7 @@ describe('PurchaseRecordsService', () => {
             Category,
             Location,
             Item,
+            Tag,
             Stock,
             StockAdjustment,
             PurchaseRecord,
@@ -58,6 +60,7 @@ describe('PurchaseRecordsService', () => {
           Category,
           Location,
           Item,
+          Tag,
           Stock,
           StockAdjustment,
           PurchaseRecord,

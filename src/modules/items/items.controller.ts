@@ -33,6 +33,12 @@ export class ItemsController {
   @ApiQuery({ name: 'categoryId', required: false })
   @ApiQuery({ name: 'locationId', required: false })
   @ApiQuery({ name: 'keyword', required: false })
+  @ApiQuery({
+    name: 'tagIds',
+    required: false,
+    type: [String],
+    description: '按标签筛选（多个标签之间为或关系）',
+  })
   findAll(@Query() query: ListItemsQueryDto) {
     return this.itemsService.findAll(query);
   }

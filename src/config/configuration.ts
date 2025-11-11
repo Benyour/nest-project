@@ -58,10 +58,7 @@ export const appConfig = registerAs(
     },
     cors: {
       enabled: process.env.CORS_ENABLED !== 'false',
-      origins: parseListEnv(
-        process.env.CORS_ORIGINS,
-        'http://localhost:5173',
-      ),
+      origins: parseListEnv(process.env.CORS_ORIGINS, 'http://localhost:5173'),
       credentials: process.env.CORS_CREDENTIALS !== 'false',
       methods: parseListEnv(
         process.env.CORS_METHODS,

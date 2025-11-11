@@ -12,6 +12,7 @@ import { ItemsModule } from './modules/items/items.module';
 import { StockModule } from './modules/stock/stock.module';
 import { PurchaseRecordsModule } from './modules/purchase-records/purchase-records.module';
 import { UsageRecordsModule } from './modules/usage-records/usage-records.module';
+import { TagsModule } from './modules/tags/tags.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { UsageRecordsModule } from './modules/usage-records/usage-records.module
     CategoriesModule,
     LocationsModule,
     ItemsModule,
+    TagsModule,
     StockModule,
     PurchaseRecordsModule,
     UsageRecordsModule,

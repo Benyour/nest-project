@@ -38,4 +38,8 @@
 - [M1 Day4] 完成库存模块重构：`StockService` 支持事务内调用、操作者用户外键、低库存筛选；`StockController` 提供列表/详情/调整/历史接口并以 200 返回状态；补齐 `stock.service.spec.ts` 与 `test/stock.e2e-spec.ts`
 - [M1 Day4] 新增采购记录模块：`PurchaseRecord`/`PurchaseRecordItem` 实体、DTO、Service、Controller，确认采购时组合事务更新库存；新增 Service 单测与 `test/purchase-records.e2e-spec.ts` 验证整体流程
 - [M1 Day4] 调整 `AppModule` 引入 `PurchaseRecordsModule`，多次执行 `npm run lint`、`npm run test`、`npm run test:e2e`，所有测试通过
-g
+
+## 2025-11-11
+- [M2 Day1] 新增标签领域：`Tag` 实体、`TagsModule`、`TagsService`、`TagsController`，支持标签 CRUD 及名称唯一校验
+- [M2 Day1] 扩展物品模块，支持多标签关联与标签筛选，完善 DTO 校验与单元/e2e 测试
+- [M2 Day1] 更新 API 文档反映标签能力，新增 TypeORM 迁移创建 `tags` 与 `item_tags` 结构

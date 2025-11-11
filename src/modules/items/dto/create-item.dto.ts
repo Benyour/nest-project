@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayUnique,
   IsInt,
   IsOptional,
   IsString,
@@ -64,4 +65,31 @@ export class CreateItemDto {
   @IsOptional()
   @IsString()
   remarks?: string;
+
+  @ApiPropertyOptional({
+    description: '关联标签 ID 列表',
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+    }
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+    }
+    return undefined;
+  })
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  tagIds?: string[];
 }

@@ -12,6 +12,7 @@ import { StockAdjustment } from '../src/modules/stock/entities/stock-adjustment.
 import { Stock } from '../src/modules/stock/entities/stock.entity';
 import { StockModule } from '../src/modules/stock/stock.module';
 import { User } from '../src/modules/users/entities/user.entity';
+import { Tag } from '../src/modules/tags/entities/tag.entity';
 
 jest.setTimeout(20000);
 
@@ -47,7 +48,15 @@ describe('StockModule (e2e)', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Category, Location, Item, Stock, StockAdjustment, User],
+          entities: [
+            Category,
+            Location,
+            Item,
+            Tag,
+            Stock,
+            StockAdjustment,
+            User,
+          ],
           synchronize: true,
         }),
         StockModule,

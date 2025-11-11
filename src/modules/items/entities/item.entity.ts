@@ -3,12 +3,15 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Category } from '../../categories/entities/category.entity';
 import { Location } from '../../locations/entities/location.entity';
+import { Tag } from '../../tags/entities/tag.entity';
 
 @Entity({ name: 'items' })
 export class Item {
@@ -48,6 +51,20 @@ export class Item {
 
   @Column({ type: 'text', nullable: true })
   remarks!: string | null;
+
+  @ManyToMany(() => Tag, (tag) => tag.items, { eager: false })
+  @JoinTable({
+    name: 'item_tags',
+    joinColumn: {
+      name: 'item_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'tag_id',
+      referencedColumnName: 'id',
+    },
+  })
+  tags!: Tag[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

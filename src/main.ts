@@ -13,9 +13,8 @@ import { AppConfigType } from './config/configuration';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const configService = app.get<ConfigService<{ app: AppConfigType }, true>>(
-    ConfigService,
-  );
+  const configService =
+    app.get<ConfigService<{ app: AppConfigType }, true>>(ConfigService);
   const appConfig = configService.getOrThrow<AppConfigType>('app');
   const { cors } = appConfig;
 

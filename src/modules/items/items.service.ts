@@ -4,9 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Category } from '../categories/entities/category.entity';
 import { Location } from '../locations/entities/location.entity';
+import { Tag } from '../tags/entities/tag.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { ListItemsQueryDto } from './dto/list-items.query.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
@@ -21,6 +22,8 @@ export class ItemsService {
     private readonly categoriesRepository: Repository<Category>,
     @InjectRepository(Location)
     private readonly locationsRepository: Repository<Location>,
+    @InjectRepository(Tag)
+    private readonly tagsRepository: Repository<Tag>,
   ) {}
 
   async findAll(query: ListItemsQueryDto): Promise<Item[]> {
@@ -28,7 +31,10 @@ export class ItemsService {
       .createQueryBuilder('item')
       .leftJoinAndSelect('item.category', 'category')
       .leftJoinAndSelect('item.defaultLocation', 'location')
+      .leftJoinAndSelect('item.tags', 'tag')
       .orderBy('item.name', 'ASC');
+
+    qb.addOrderBy('tag.name', 'ASC', 'NULLS LAST');
 
     if (query.categoryId) {
       qb.andWhere('category.id = :categoryId', {
@@ -49,13 +55,18 @@ export class ItemsService {
       );
     }
 
+    if (query.tagIds?.length) {
+      qb.andWhere('tag.id IN (:...tagIds)', { tagIds: query.tagIds });
+      qb.distinct(true);
+    }
+
     return qb.getMany();
   }
 
   async findOne(id: string): Promise<Item> {
     const item = await this.itemsRepository.findOne({
       where: { id },
-      relations: ['category', 'defaultLocation'],
+      relations: ['category', 'defaultLocation', 'tags'],
     });
 
     if (!item) {
@@ -88,6 +99,22 @@ export class ItemsService {
     return location;
   }
 
+  private async ensureTags(tagIds?: string[]): Promise<Tag[]> {
+    if (!tagIds || tagIds.length === 0) {
+      return [];
+    }
+    const uniqueIds = Array.from(new Set(tagIds));
+    const tags = await this.tagsRepository.find({
+      where: { id: In(uniqueIds) },
+    });
+    if (tags.length !== uniqueIds.length) {
+      const found = new Set(tags.map((tag) => tag.id));
+      const missing = uniqueIds.filter((id) => !found.has(id));
+      throw new BadRequestException(`Tag(s) not found: ${missing.join(', ')}`);
+    }
+    return tags;
+  }
+
   private async ensureCodeUnique(code?: string, excludeId?: string) {
     if (!code) {
       return;
@@ -108,6 +135,7 @@ export class ItemsService {
     await this.ensureCodeUnique(dto.code);
     const category = await this.ensureCategory(dto.categoryId);
     const defaultLocation = await this.ensureLocation(dto.defaultLocationId);
+    const tags = await this.ensureTags(dto.tagIds);
 
     const item = this.itemsRepository.create({
       name: dto.name,
@@ -120,6 +148,7 @@ export class ItemsService {
       remarks: dto.remarks ?? null,
       category,
       defaultLocation,
+      tags,
     });
 
     return this.itemsRepository.save(item);
@@ -138,6 +167,10 @@ export class ItemsService {
 
     if (dto.defaultLocationId !== undefined) {
       item.defaultLocation = await this.ensureLocation(dto.defaultLocationId);
+    }
+
+    if (dto.tagIds !== undefined) {
+      item.tags = await this.ensureTags(dto.tagIds);
     }
 
     item.name = dto.name ?? item.name;

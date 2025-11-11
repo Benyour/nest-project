@@ -18,6 +18,7 @@ import { StockAdjustment } from '../src/modules/stock/entities/stock-adjustment.
 import { StockModule } from '../src/modules/stock/stock.module';
 import { User, UserStatus } from '../src/modules/users/entities/user.entity';
 import { UsersModule } from '../src/modules/users/users.module';
+import { Tag } from '../src/modules/tags/entities/tag.entity';
 
 type SupertestTarget = Parameters<typeof request>[0];
 type SupertestAgent = ReturnType<typeof request.agent>;
@@ -58,6 +59,7 @@ describe('UsageRecords (e2e)', () => {
             Category,
             Location,
             Item,
+            Tag,
             Stock,
             StockAdjustment,
             UsageRecord,

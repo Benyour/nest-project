@@ -9,6 +9,7 @@ import { Category } from '../src/modules/categories/entities/category.entity';
 import { Location } from '../src/modules/locations/entities/location.entity';
 import { Item } from '../src/modules/items/entities/item.entity';
 import { ItemsModule } from '../src/modules/items/items.module';
+import { Tag } from '../src/modules/tags/entities/tag.entity';
 
 type SupertestTarget = Parameters<typeof request>[0];
 type SupertestAgent = ReturnType<typeof request.agent>;
@@ -38,6 +39,7 @@ type ItemPayload = {
     id: string;
     name: string;
   } | null;
+  tags: Array<{ id: string; name: string }>;
   createdAt: string;
   updatedAt: string;
 };
@@ -47,6 +49,7 @@ describe('ItemsModule (e2e)', () => {
   let agent: SupertestAgent;
   let category: Category;
   let location: Location;
+  let tag: Tag;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -54,7 +57,7 @@ describe('ItemsModule (e2e)', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Category, Location, Item],
+          entities: [Category, Location, Item, Tag],
           synchronize: true,
         }),
         ItemsModule,
@@ -82,6 +85,7 @@ describe('ItemsModule (e2e)', () => {
     const locationRepository = app.get<Repository<Location>>(
       getRepositoryToken(Location),
     );
+    const tagRepository = app.get<Repository<Tag>>(getRepositoryToken(Tag));
 
     category = await categoryRepository.save({
       name: '食品',
@@ -95,6 +99,10 @@ describe('ItemsModule (e2e)', () => {
       description: null,
       sortOrder: 0,
       parent: null,
+    });
+
+    tag = await tagRepository.save({
+      name: '常用',
     });
   });
 
@@ -112,6 +120,7 @@ describe('ItemsModule (e2e)', () => {
         code: 'MILK-001',
         defaultLocationId: location.id,
         shelfLifeDays: 30,
+        tagIds: [tag.id],
       })
       .expect(201);
 
@@ -119,6 +128,9 @@ describe('ItemsModule (e2e)', () => {
     expect(createBody.data.name).toBe('有机牛奶');
     expect(createBody.data.category.id).toBe(category.id);
     expect(createBody.data.defaultLocation?.id).toBe(location.id);
+    expect(createBody.data.tags).toEqual([
+      expect.objectContaining({ id: tag.id, name: tag.name }),
+    ]);
 
     const listResponse = await agent
       .get('/items')
@@ -126,12 +138,14 @@ describe('ItemsModule (e2e)', () => {
       .expect(200);
     const listBody = listResponse.body as SuccessResponse<ItemPayload[]>;
     expect(listBody.data).toHaveLength(1);
+    expect(listBody.data[0].tags).toHaveLength(1);
 
     const detailResponse = await agent
       .get(`/items/${createBody.data.id}`)
       .expect(200);
     const detailBody = detailResponse.body as SuccessResponse<ItemPayload>;
     expect(detailBody.data.code).toBe('MILK-001');
+    expect(detailBody.data.tags).toHaveLength(1);
 
     const updateResponse = await agent
       .patch(`/items/${createBody.data.id}`)
@@ -139,12 +153,14 @@ describe('ItemsModule (e2e)', () => {
         name: '低脂牛奶',
         brand: '品牌B',
         code: 'MILK-002',
+        tagIds: [],
       })
       .expect(200);
     const updateBody = updateResponse.body as SuccessResponse<ItemPayload>;
     expect(updateBody.data.name).toBe('低脂牛奶');
     expect(updateBody.data.brand).toBe('品牌B');
     expect(updateBody.data.code).toBe('MILK-002');
+    expect(updateBody.data.tags).toHaveLength(0);
 
     await agent.delete(`/items/${createBody.data.id}`).expect(200);
 

@@ -9,6 +9,7 @@ import { StockAdjustment } from '../stock/entities/stock-adjustment.entity';
 import { Stock } from '../stock/entities/stock.entity';
 import { StockService } from '../stock/stock.service';
 import { User, UserStatus } from '../users/entities/user.entity';
+import { Tag } from '../tags/entities/tag.entity';
 import { ConfirmUsageRecordDto } from './dto/confirm-usage-record.dto';
 import { CreateUsageRecordDto } from './dto/create-usage-record.dto';
 import { UsageRecordItemDto } from './dto/usage-record-item.dto';
@@ -47,6 +48,7 @@ describe('UsageRecordsService', () => {
             Category,
             Location,
             Item,
+            Tag,
             Stock,
             StockAdjustment,
             UsageRecord,
@@ -59,6 +61,7 @@ describe('UsageRecordsService', () => {
           Category,
           Location,
           Item,
+          Tag,
           Stock,
           StockAdjustment,
           UsageRecord,
