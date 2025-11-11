@@ -43,3 +43,4 @@
 - [M2 Day1] 新增标签领域：`Tag` 实体、`TagsModule`、`TagsService`、`TagsController`，支持标签 CRUD 及名称唯一校验
 - [M2 Day1] 扩展物品模块，支持多标签关联与标签筛选，完善 DTO 校验与单元/e2e 测试
 - [M2 Day1] 更新 API 文档反映标签能力，新增 TypeORM 迁移创建 `tags` 与 `item_tags` 结构
+- [M2 Day2] 集成 RabbitMQ：新增 `NotificationsModule`，通过 CloudAMQP 发布/消费库存提醒事件，定时扫描低库存与临期物品并发送邮件

@@ -1,5 +1,12 @@
 # 消息队列（MQ）详解 - 家庭物品管家项目
 
+> **2025-11-11 更新：项目已实装 CloudAMQP（RabbitMQ）提醒管道**
+>
+> - 通过 `NotificationsModule` 接入 CloudAMQP，`NotificationScannerService` 定时扫描低库存/临期数据并向队列发布 `notifications.stock` 事件。
+> - `NotificationConsumerService` 作为微服务消费者，监听队列并调用 `EmailService` 发送提醒邮件（使用 `nodemailer`）。
+> - 相关环境变量：`RABBITMQ_URL`、`RABBITMQ_NOTIFICATION_QUEUE`、`NOTIFICATION_*`、`MAIL_*`（样例见 `config/local.env.example`）。
+> - 如果未配置 SMTP 凭据，消费逻辑会记录日志但不会真正发送邮件，便于本地调试。
+
 ## 1. 什么是消息队列？
 
 ### 1.1 生活中的类比

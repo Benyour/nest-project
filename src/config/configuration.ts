@@ -32,6 +32,20 @@ export interface AppConfig {
   };
   rabbitmq: {
     url: string;
+    notificationQueue: string;
+  };
+  notification: {
+    emailEnabled: boolean;
+    leadDays: number;
+    recipients: string[];
+  };
+  mail: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
   };
 }
 
@@ -78,6 +92,24 @@ export const appConfig = registerAs(
     },
     rabbitmq: {
       url: process.env.RABBITMQ_URL ?? '',
+      notificationQueue:
+        process.env.RABBITMQ_NOTIFICATION_QUEUE ?? 'notifications',
+    },
+    notification: {
+      emailEnabled: process.env.NOTIFICATION_EMAIL_ENABLED !== 'false',
+      leadDays: parseInt(process.env.NOTIFICATION_LEAD_DAYS ?? '3', 10),
+      recipients: parseListEnv(
+        process.env.NOTIFICATION_EMAIL_RECIPIENTS,
+        process.env.MAIL_TO ?? '',
+      ),
+    },
+    mail: {
+      host: process.env.MAIL_HOST ?? '',
+      port: parseInt(process.env.MAIL_PORT ?? '465', 10),
+      secure: process.env.MAIL_SECURE !== 'false',
+      user: process.env.MAIL_USER ?? '',
+      pass: process.env.MAIL_PASS ?? '',
+      from: process.env.MAIL_FROM ?? 'no-reply@example.com',
     },
   }),
 );

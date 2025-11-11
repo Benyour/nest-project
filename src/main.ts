@@ -8,6 +8,7 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { ConfigService } from '@nestjs/config';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppConfigType } from './config/configuration';
 
 async function bootstrap() {
@@ -60,10 +61,25 @@ async function bootstrap() {
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, swaggerDocument);
 
+  const microserviceOptions: MicroserviceOptions = {
+    transport: Transport.RMQ,
+    options: {
+      urls: [appConfig.rabbitmq.url],
+      queue: appConfig.rabbitmq.notificationQueue,
+      queueOptions: {
+        durable: true,
+      },
+    },
+  };
+
+  app.connectMicroservice<MicroserviceOptions>(microserviceOptions);
+
   const port = appConfig.port ?? 3000;
+  await app.startAllMicroservices();
   await app.listen(port);
   Logger.log(`Application running on http://localhost:${port}`);
   Logger.log(`Swagger UI available at http://localhost:${port}/docs`);
+  Logger.log('Notification microservice connected to RabbitMQ');
 }
 
 bootstrap().catch((error) => {

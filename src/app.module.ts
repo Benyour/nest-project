@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import configuration, { AppConfigType } from './config/configuration';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,6 +14,7 @@ import { StockModule } from './modules/stock/stock.module';
 import { PurchaseRecordsModule } from './modules/purchase-records/purchase-records.module';
 import { UsageRecordsModule } from './modules/usage-records/usage-records.module';
 import { TagsModule } from './modules/tags/tags.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { TagsModule } from './modules/tags/tags.module';
       isGlobal: true,
       load: [configuration],
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (
@@ -56,6 +59,7 @@ import { TagsModule } from './modules/tags/tags.module';
     StockModule,
     PurchaseRecordsModule,
     UsageRecordsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
