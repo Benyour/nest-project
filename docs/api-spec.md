@@ -272,7 +272,28 @@
 
 ---
 
-## 9. 系统根路径（调试）
+## 9. 购物清单
+- **GET** `/shopping-lists`：列表
+- **GET** `/shopping-lists/:id`：详情
+- **POST** `/shopping-lists`
+  ```json
+  {
+    "name": "周末采购",
+    "remarks": "自动生成",
+    "items": [
+      { "itemId": "uuid", "quantity": 2, "remarks": "全脂牛奶" }
+    ]
+  }
+  ```
+- **PATCH** `/shopping-lists/:id`：更新名称/备注/条目
+- **PATCH** `/shopping-lists/:id/status`：更新清单状态（`pending`/`partial`/`completed`）
+- **POST** `/shopping-lists/:id/items/:itemId/purchased`：标记条目已购
+- **POST** `/shopping-lists/:id/items/:itemId/reset`：恢复条目为待购
+- **DELETE** `/shopping-lists/:id`
+
+---
+
+## 10. 系统根路径（调试）
 - **GET** `/`：返回健康测试字符串
 - **GET** `/zhang`：返回调试信息
 
@@ -280,7 +301,7 @@
 
 ---
 
-## 10. 错误码示例
+## 11. 错误码示例
 | 业务场景 | 错误码 | HTTP 状态 | 描述 |
 | --- | --- | --- | --- |
 | 认证失败 | `AUTH-001` | 401 | 用户不存在或密码错误 |

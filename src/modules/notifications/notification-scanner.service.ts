@@ -22,7 +22,7 @@ export class NotificationScannerService {
     this.leadDays = appConfig.notification.leadDays;
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async scanAndDispatch(): Promise<void> {
     this.logger.debug('Running notification scanner job');
 

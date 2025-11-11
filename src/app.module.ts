@@ -15,6 +15,7 @@ import { PurchaseRecordsModule } from './modules/purchase-records/purchase-recor
 import { UsageRecordsModule } from './modules/usage-records/usage-records.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ShoppingListsModule } from './modules/shopping-lists/shopping-lists.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     PurchaseRecordsModule,
     UsageRecordsModule,
     NotificationsModule,
+    ShoppingListsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
