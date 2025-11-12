@@ -185,6 +185,8 @@
   ```
 - **GET** `/stock/:id/adjustments`：按时间倒序返回调整记录
 
+> **type 说明**：固定枚举 `manual_audit`（手工盘点）、`purchase`（采购入库）、`usage`（消耗出库）、`correction`（纠正）；支持大小写、`manual` 等常见别名，后端会自动归一化。
+
 ---
 
 ## 6. 采购记录
