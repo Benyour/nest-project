@@ -129,9 +129,7 @@ describe('PurchaseRecordsService', () => {
 
   const buildCreateDto = (
     overrides: Partial<CreatePurchaseRecordDto> = {},
-  ) => ({
-    code: 'PO-0001',
-    createdById: user.id,
+  ): CreatePurchaseRecordDto => ({
     purchaseDate: '2025-01-01',
     storeName: '永辉超市',
     items: buildItems(),
@@ -141,25 +139,29 @@ describe('PurchaseRecordsService', () => {
   describe('create', () => {
     it('should create draft purchase record with items', async () => {
       const dto = buildCreateDto();
-      const record = await service.create(dto);
+      const record = await service.create(dto, user.id);
 
       expect(record.id).toBeDefined();
       expect(record.status).toBe(PurchaseRecordStatus.DRAFT);
       expect(record.items).toHaveLength(1);
       expect(record.totalAmount).toBeCloseTo(25);
+      expect(record.code).toMatch(/^PR-\d{8}-[A-Z0-9]{6}$/);
     });
 
-    it('should reject duplicate code', async () => {
-      await service.create(buildCreateDto());
-      await expect(service.create(buildCreateDto())).rejects.toThrow(
-        new BadRequestException('Purchase record code PO-0001 already exists'),
+    it('should generate distinct codes for different records', async () => {
+      const record1 = await service.create(buildCreateDto(), user.id);
+      const record2 = await service.create(
+        buildCreateDto({ purchaseDate: '2025-01-02' }),
+        user.id,
       );
+
+      expect(record1.code).not.toBe(record2.code);
     });
   });
 
   describe('update/remove', () => {
     it('should update draft record and replace items', async () => {
-      const record = await service.create(buildCreateDto());
+      const record = await service.create(buildCreateDto(), user.id);
       const dto: UpdatePurchaseRecordDto = {
         storeName: '山姆会员店',
         items: buildItems({ quantity: 3, unitPrice: 10 }),
@@ -172,8 +174,8 @@ describe('PurchaseRecordsService', () => {
     });
 
     it('should prevent deleting confirmed record', async () => {
-      const record = await service.create(buildCreateDto());
-      await service.confirm(record.id, {});
+      const record = await service.create(buildCreateDto(), user.id);
+      await service.confirm(record.id, {}, user.id);
 
       await expect(service.remove(record.id)).rejects.toThrow(
         new BadRequestException('Only draft purchase records can be deleted'),
@@ -183,12 +185,16 @@ describe('PurchaseRecordsService', () => {
 
   describe('confirm', () => {
     it('should confirm draft and create stock when missing', async () => {
-      const record = await service.create(buildCreateDto());
+      const record = await service.create(buildCreateDto(), user.id);
 
-      const confirmed = await service.confirm(record.id, {
-        confirmedById: user.id,
-        remarks: '已验收',
-      } satisfies ConfirmPurchaseRecordDto);
+      const confirmed = await service.confirm(
+        record.id,
+        {
+          confirmedById: user.id,
+          remarks: '已验收',
+        } satisfies ConfirmPurchaseRecordDto,
+        user.id,
+      );
 
       expect(confirmed.status).toBe(PurchaseRecordStatus.CONFIRMED);
       const stocks = await stockRepository.find({
@@ -210,12 +216,12 @@ describe('PurchaseRecordsService', () => {
 
       const record = await service.create(
         buildCreateDto({
-          code: 'PO-0002',
           items: buildItems({ quantity: 4, unitPrice: 10 }),
         }),
+        user.id,
       );
 
-      await service.confirm(record.id, {});
+      await service.confirm(record.id, {}, user.id);
 
       const stock = await stockRepository.findOneOrFail({
         where: { id: existingStock.id },
@@ -224,10 +230,10 @@ describe('PurchaseRecordsService', () => {
     });
 
     it('should reject confirming non-draft record', async () => {
-      const record = await service.create(buildCreateDto());
-      await service.confirm(record.id, {});
+      const record = await service.create(buildCreateDto(), user.id);
+      await service.confirm(record.id, {}, user.id);
 
-      await expect(service.confirm(record.id, {})).rejects.toThrow(
+      await expect(service.confirm(record.id, {}, user.id)).rejects.toThrow(
         new BadRequestException('Only draft purchase records can be confirmed'),
       );
     });

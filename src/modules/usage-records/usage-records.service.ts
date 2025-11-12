@@ -80,8 +80,15 @@ export class UsageRecordsService {
     return location;
   }
 
-  async create(dto: CreateUsageRecordDto): Promise<UsageRecord> {
-    const createdBy = await this.ensureUser(dto.createdById);
+  async create(
+    dto: CreateUsageRecordDto,
+    createdById: string,
+  ): Promise<UsageRecord> {
+    if (!createdById) {
+      throw new BadRequestException('Created by user is required');
+    }
+
+    const createdBy = await this.ensureUser(createdById);
 
     const items = await Promise.all(
       dto.items.map(async (itemDto) => {
@@ -116,10 +123,6 @@ export class UsageRecordsService {
 
     if (record.status !== UsageRecordStatus.DRAFT) {
       throw new BadRequestException('Only draft usage records can be updated');
-    }
-
-    if (dto.createdById) {
-      record.createdBy = await this.ensureUser(dto.createdById);
     }
 
     record.usageDate = dto.usageDate ?? record.usageDate;
@@ -198,7 +201,11 @@ export class UsageRecordsService {
     );
   }
 
-  async confirm(id: string, dto: ConfirmUsageRecordDto): Promise<UsageRecord> {
+  async confirm(
+    id: string,
+    dto: ConfirmUsageRecordDto,
+    currentUserId?: string,
+  ): Promise<UsageRecord> {
     const record = await this.findOne(id);
 
     if (record.status !== UsageRecordStatus.DRAFT) {
@@ -207,8 +214,9 @@ export class UsageRecordsService {
       );
     }
 
-    const confirmedBy = dto.confirmedById
-      ? await this.ensureUser(dto.confirmedById)
+    const confirmedById = dto.confirmedById ?? currentUserId;
+    const confirmedBy = confirmedById
+      ? await this.ensureUser(confirmedById)
       : null;
 
     await this.dataSource.transaction(async (manager) => {

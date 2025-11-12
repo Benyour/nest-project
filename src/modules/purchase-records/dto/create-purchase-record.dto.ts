@@ -7,22 +7,12 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
 } from 'class-validator';
 import { PurchaseRecordStatus } from '../entities/purchase-record.entity';
 import { PurchaseRecordItemDto } from './purchase-record-item.dto';
 
 export class CreatePurchaseRecordDto {
-  @ApiProperty({ description: '采购单编号（可自动生成）' })
-  @IsString()
-  @MaxLength(32)
-  code!: string;
-
-  @ApiProperty({ description: '创建人用户 ID' })
-  @IsUUID()
-  createdById!: string;
-
   @ApiProperty({ description: '采购日期', example: '2025-01-01' })
   @IsDateString()
   purchaseDate!: string;

@@ -39,9 +39,9 @@
 - [M1 Day4] 新增采购记录模块：`PurchaseRecord`/`PurchaseRecordItem` 实体、DTO、Service、Controller，确认采购时组合事务更新库存；新增 Service 单测与 `test/purchase-records.e2e-spec.ts` 验证整体流程
 - [M1 Day4] 调整 `AppModule` 引入 `PurchaseRecordsModule`，多次执行 `npm run lint`、`npm run test`、`npm run test:e2e`，所有测试通过
 
-## 2025-11-11
 - [M2 Day1] 新增标签领域：`Tag` 实体、`TagsModule`、`TagsService`、`TagsController`，支持标签 CRUD 及名称唯一校验
 - [M2 Day1] 扩展物品模块，支持多标签关联与标签筛选，完善 DTO 校验与单元/e2e 测试
 - [M2 Day1] 更新 API 文档反映标签能力，新增 TypeORM 迁移创建 `tags` 与 `item_tags` 结构
-- [M2 Day2] 集成 RabbitMQ：新增 `NotificationsModule`，通过 CloudAMQP 发布/消费库存提醒事件，定时扫描低库存与临期物品并发送邮件
-- [M2 Day2] 完成购物清单管理：`ShoppingList`/`ShoppingListItem` 实体、模块、Service、Controller；支持清单 CRUD、条目状态、状态自动计算；新增关系迁移及 e2e 测试
+- [M2 Day2] 集成 RabbitMQ：新增 `NotificationsModule`，通过 CloudAMQP 发布/消费库存提醒事件，定时扫描低库存与临期物品并发送邮件；同时向 `shopping-lists.auto-create` 发布事件
+- [M2 Day2] 完成购物清单管理：`ShoppingList`/`ShoppingListItem` 实体、模块、Service、Controller；支持清单 CRUD、条目状态、状态自动计算；新增关系迁移及 e2e 测试；自动生成与提醒联动
+- [M2 Day2] 优化采购/使用记录提交流程：移除前端 `code`、`createdById` 入参，后端基于当前用户生成 `code` 与 `createdBy`，更新单元 & e2e 测试及文档说明

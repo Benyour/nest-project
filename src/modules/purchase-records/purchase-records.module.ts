@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { Item } from '../items/entities/item.entity';
 import { Location } from '../locations/entities/location.entity';
 import { Stock } from '../stock/entities/stock.entity';
@@ -23,6 +24,7 @@ import { PurchaseRecordsService } from './purchase-records.service';
       User,
     ]),
     StockModule,
+    AuthModule,
   ],
   controllers: [PurchaseRecordsController],
   providers: [PurchaseRecordsService],

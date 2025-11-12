@@ -129,17 +129,18 @@ describe('UsageRecordsService', () => {
     } satisfies UsageRecordItemDto,
   ];
 
-  const buildCreateDto = (overrides: Partial<CreateUsageRecordDto> = {}) => ({
+  const buildCreateDto = (
+    overrides: Partial<CreateUsageRecordDto> = {},
+  ): CreateUsageRecordDto => ({
     usageDate: '2025-02-01',
     type: UsageRecordType.DAILY,
-    createdById: user.id,
     items: buildItems(),
     ...overrides,
   });
 
   describe('create', () => {
     it('should create draft usage record', async () => {
-      const record = await service.create(buildCreateDto());
+      const record = await service.create(buildCreateDto(), user.id);
       expect(record.status).toBe(UsageRecordStatus.DRAFT);
       expect(record.items).toHaveLength(1);
     });
@@ -147,7 +148,7 @@ describe('UsageRecordsService', () => {
 
   describe('update/remove', () => {
     it('should update draft record and replace items', async () => {
-      const record = await service.create(buildCreateDto());
+      const record = await service.create(buildCreateDto(), user.id);
       const dto: UpdateUsageRecordDto = {
         remarks: '午餐使用',
         items: buildItems({ quantity: 1.5 }),
@@ -159,8 +160,8 @@ describe('UsageRecordsService', () => {
     });
 
     it('should prevent removing confirmed record', async () => {
-      const record = await service.create(buildCreateDto());
-      await service.confirm(record.id, {});
+      const record = await service.create(buildCreateDto(), user.id);
+      await service.confirm(record.id, {}, user.id);
 
       await expect(service.remove(record.id)).rejects.toThrow(
         new BadRequestException('Only draft usage records can be deleted'),
@@ -170,12 +171,16 @@ describe('UsageRecordsService', () => {
 
   describe('confirm', () => {
     it('should confirm draft and deduct stock', async () => {
-      const record = await service.create(buildCreateDto());
+      const record = await service.create(buildCreateDto(), user.id);
 
-      const confirmed = await service.confirm(record.id, {
-        confirmedById: user.id,
-        remarks: '确认扣减',
-      } satisfies ConfirmUsageRecordDto);
+      const confirmed = await service.confirm(
+        record.id,
+        {
+          confirmedById: user.id,
+          remarks: '确认扣减',
+        } satisfies ConfirmUsageRecordDto,
+        user.id,
+      );
 
       expect(confirmed.status).toBe(UsageRecordStatus.CONFIRMED);
       const stock = await stockRepository.findOneByOrFail({
@@ -188,9 +193,10 @@ describe('UsageRecordsService', () => {
     it('should reject when stock is insufficient', async () => {
       const record = await service.create(
         buildCreateDto({ items: buildItems({ quantity: 10 }) }),
+        user.id,
       );
 
-      await expect(service.confirm(record.id, {})).rejects.toThrow(
+      await expect(service.confirm(record.id, {}, user.id)).rejects.toThrow(
         new BadRequestException(
           `Insufficient stock for item ${item.id} at location ${location.id}`,
         ),
@@ -198,10 +204,10 @@ describe('UsageRecordsService', () => {
     });
 
     it('should reject confirming non-draft record', async () => {
-      const record = await service.create(buildCreateDto());
-      await service.confirm(record.id, {});
+      const record = await service.create(buildCreateDto(), user.id);
+      await service.confirm(record.id, {}, user.id);
 
-      await expect(service.confirm(record.id, {})).rejects.toThrow(
+      await expect(service.confirm(record.id, {}, user.id)).rejects.toThrow(
         new BadRequestException('Only draft usage records can be confirmed'),
       );
     });

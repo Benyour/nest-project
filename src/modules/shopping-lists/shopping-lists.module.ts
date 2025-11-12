@@ -5,10 +5,11 @@ import { ShoppingListsController } from './shopping-lists.controller';
 import { ShoppingListsService } from './shopping-lists.service';
 import { ShoppingList } from './entities/shopping-list.entity';
 import { ShoppingListItem } from './entities/shopping-list-item.entity';
+import { ShoppingListConsumerService } from './shopping-list-consumer.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ShoppingList, ShoppingListItem, Item])],
-  controllers: [ShoppingListsController],
+  controllers: [ShoppingListsController, ShoppingListConsumerService],
   providers: [ShoppingListsService],
   exports: [ShoppingListsService],
 })

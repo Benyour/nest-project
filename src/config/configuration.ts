@@ -33,6 +33,7 @@ export interface AppConfig {
   rabbitmq: {
     url: string;
     notificationQueue: string;
+    shoppingListQueue: string;
   };
   notification: {
     emailEnabled: boolean;
@@ -94,6 +95,8 @@ export const appConfig = registerAs(
       url: process.env.RABBITMQ_URL ?? '',
       notificationQueue:
         process.env.RABBITMQ_NOTIFICATION_QUEUE ?? 'notifications',
+      shoppingListQueue:
+        process.env.RABBITMQ_SHOPPING_LIST_QUEUE ?? 'shopping-lists',
     },
     notification: {
       emailEnabled: process.env.NOTIFICATION_EMAIL_ENABLED !== 'false',

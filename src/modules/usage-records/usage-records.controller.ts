@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -16,15 +18,23 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
+import type { Request } from 'express';
+import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { ConfirmUsageRecordDto } from './dto/confirm-usage-record.dto';
 import { CreateUsageRecordDto } from './dto/create-usage-record.dto';
 import { UpdateUsageRecordDto } from './dto/update-usage-record.dto';
 import { UsageRecordsService } from './usage-records.service';
 
+type AuthenticatedRequest = Request & { user?: { userId?: string } };
+
 @ApiTags('使用记录')
 @Controller('usage-records')
 export class UsageRecordsController {
-  constructor(private readonly usageRecordsService: UsageRecordsService) {}
+  constructor(
+    private readonly usageRecordsService: UsageRecordsService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '使用记录列表' })
@@ -43,9 +53,12 @@ export class UsageRecordsController {
   @Post()
   @ApiOperation({ summary: '创建使用记录（草稿）' })
   @ApiCreatedResponse({ description: '使用记录创建成功' })
-  @ApiBadRequestResponse({ description: '参数错误或关联信息不存在' })
-  create(@Body() dto: CreateUsageRecordDto) {
-    return this.usageRecordsService.create(dto);
+  @ApiBadRequestResponse({
+    description: '参数错误、关联信息不存在或缺少登录用户',
+  })
+  create(@Body() dto: CreateUsageRecordDto, @Req() req: AuthenticatedRequest) {
+    const userId = this.getRequestUserId(req);
+    return this.usageRecordsService.create(dto, userId);
   }
 
   @Patch(':id')
@@ -73,7 +86,57 @@ export class UsageRecordsController {
   confirm(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: ConfirmUsageRecordDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.usageRecordsService.confirm(id, dto);
+    const userId = this.getRequestUserId(req, false);
+    return this.usageRecordsService.confirm(id, dto, userId);
+  }
+
+  private getRequestUserId(req: AuthenticatedRequest): string;
+  private getRequestUserId(req: AuthenticatedRequest, required: true): string;
+  private getRequestUserId(
+    req: AuthenticatedRequest,
+    required: false,
+  ): string | undefined;
+  private getRequestUserId(
+    req: AuthenticatedRequest,
+    required = true,
+  ): string | undefined {
+    const headerValue = req.headers['x-user-id'];
+    const headerUserId = Array.isArray(headerValue)
+      ? headerValue[0]
+      : headerValue;
+    const tokenUserId = this.extractUserIdFromAuthorization(req);
+    const userId = req.user?.userId ?? headerUserId ?? tokenUserId;
+
+    if (!userId) {
+      if (required) {
+        throw new BadRequestException('Missing authenticated user');
+      }
+      return undefined;
+    }
+
+    return userId;
+  }
+
+  private extractUserIdFromAuthorization(
+    req: AuthenticatedRequest,
+  ): string | undefined {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || Array.isArray(authHeader)) {
+      return undefined;
+    }
+
+    const [scheme, token] = authHeader.split(' ');
+    if (!token || scheme?.toLowerCase() !== 'bearer') {
+      return undefined;
+    }
+
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token);
+      return payload?.sub;
+    } catch {
+      return undefined;
+    }
   }
 }

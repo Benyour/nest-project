@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { NotificationProducerService } from './notification-producer.service';
+import { ShoppingListProducerService } from './shopping-list-producer.service';
 import { Stock } from '../stock/entities/stock.entity';
 import { AppConfigType } from '../../config/configuration';
 
@@ -16,6 +17,7 @@ export class NotificationScannerService {
     @InjectRepository(Stock)
     private readonly stockRepository: Repository<Stock>,
     private readonly producerService: NotificationProducerService,
+    private readonly shoppingListProducer: ShoppingListProducerService,
     configService: ConfigService<{ app: AppConfigType }, true>,
   ) {
     const appConfig = configService.getOrThrow<AppConfigType>('app');
@@ -50,6 +52,14 @@ export class NotificationScannerService {
           type: 'low_stock',
           detectedAt: now.toISOString(),
         });
+        this.shoppingListProducer.publish({
+          itemId: stock.item.id,
+          itemName: stock.item.name,
+          quantity: Math.max(stock.minQuantity - stock.quantity, 1),
+          locationName: stock.location?.name ?? null,
+          reason: 'low_stock',
+          detectedAt: now.toISOString(),
+        });
       }
 
       if (stock.expiryDate) {
@@ -64,6 +74,14 @@ export class NotificationScannerService {
             minQuantity: stock.minQuantity,
             expiryDate: stock.expiryDate,
             type: 'near_expiry',
+            detectedAt: now.toISOString(),
+          });
+          this.shoppingListProducer.publish({
+            itemId: stock.item.id,
+            itemName: stock.item.name,
+            quantity: Math.max(stock.minQuantity ?? stock.quantity ?? 1, 1),
+            locationName: stock.location?.name ?? null,
+            reason: 'near_expiry',
             detectedAt: now.toISOString(),
           });
         }

@@ -7,7 +7,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
 } from 'class-validator';
 import { PurchaseRecordStatus } from '../entities/purchase-record.entity';
@@ -50,9 +49,4 @@ export class UpdatePurchaseRecordDto {
   @ArrayMinSize(1)
   @Type(() => PurchaseRecordItemDto)
   items?: PurchaseRecordItemDto[];
-
-  @ApiPropertyOptional({ description: '重新分配创建人（极少数情况）' })
-  @IsOptional()
-  @IsUUID()
-  createdById?: string;
 }

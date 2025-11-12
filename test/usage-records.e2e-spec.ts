@@ -145,10 +145,10 @@ describe('UsageRecords (e2e)', () => {
   it('should create draft usage record, confirm and deduct stock', async () => {
     const createResponse = await agent
       .post('/usage-records')
+      .set('x-user-id', user.id)
       .send({
         usageDate: '2025-02-02',
         type: 'daily',
-        createdById: user.id,
         items: [
           {
             itemId: item.id,
@@ -165,7 +165,8 @@ describe('UsageRecords (e2e)', () => {
 
     const confirmResponse = await agent
       .post(`/usage-records/${createBody.data.id}/confirm`)
-      .send({ confirmedById: user.id, remarks: '早餐消耗' })
+      .set('x-user-id', user.id)
+      .send({ remarks: '早餐消耗' })
       .expect(200);
 
     const confirmBody = confirmResponse.body as ApiResponse<UsageRecordPayload>;
@@ -173,6 +174,7 @@ describe('UsageRecords (e2e)', () => {
 
     await agent
       .patch(`/usage-records/${createBody.data.id}`)
+      .set('x-user-id', user.id)
       .send({ remarks: 'should fail' })
       .expect(400);
 

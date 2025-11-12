@@ -96,17 +96,16 @@ export class PurchaseRecordsService {
     }, 0);
   }
 
-  async create(dto: CreatePurchaseRecordDto): Promise<PurchaseRecord> {
-    const existing = await this.purchaseRecordRepository.findOne({
-      where: { code: dto.code },
-    });
-    if (existing) {
-      throw new BadRequestException(
-        `Purchase record code ${dto.code} already exists`,
-      );
+  async create(
+    dto: CreatePurchaseRecordDto,
+    createdById: string,
+  ): Promise<PurchaseRecord> {
+    if (!createdById) {
+      throw new BadRequestException('Created by user is required');
     }
 
-    const createdBy = await this.ensureUser(dto.createdById);
+    const createdBy = await this.ensureUser(createdById);
+    const code = await this.generatePurchaseCode();
 
     const items = await Promise.all(
       dto.items.map(async (itemDto) => {
@@ -117,7 +116,7 @@ export class PurchaseRecordsService {
     );
 
     const record = this.purchaseRecordRepository.create({
-      code: dto.code,
+      code,
       createdBy,
       purchaseDate: dto.purchaseDate,
       status: dto.status ?? PurchaseRecordStatus.DRAFT,
@@ -156,10 +155,6 @@ export class PurchaseRecordsService {
       throw new BadRequestException(
         'Only draft purchase records can be updated',
       );
-    }
-
-    if (dto.createdById) {
-      record.createdBy = await this.ensureUser(dto.createdById);
     }
 
     record.purchaseDate = dto.purchaseDate ?? record.purchaseDate;
@@ -211,6 +206,7 @@ export class PurchaseRecordsService {
   async confirm(
     id: string,
     dto: ConfirmPurchaseRecordDto,
+    currentUserId?: string,
   ): Promise<PurchaseRecord> {
     const record = await this.findOne(id);
 
@@ -220,8 +216,9 @@ export class PurchaseRecordsService {
       );
     }
 
-    const confirmedBy = dto.confirmedById
-      ? await this.ensureUser(dto.confirmedById)
+    const confirmedById = dto.confirmedById ?? currentUserId;
+    const confirmedBy = confirmedById
+      ? await this.ensureUser(confirmedById)
       : null;
 
     await this.dataSource.transaction(async (manager) => {
@@ -289,5 +286,24 @@ export class PurchaseRecordsService {
     });
 
     return this.findOne(id);
+  }
+
+  private async generatePurchaseCode(): Promise<string> {
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const randomPart = Math.random().toString(36).slice(2, 8).toUpperCase();
+      const candidate = `PR-${datePart}-${randomPart}`;
+      const exists = await this.purchaseRecordRepository.findOne({
+        where: { code: candidate },
+      });
+      if (!exists) {
+        return candidate;
+      }
+    }
+
+    throw new BadRequestException(
+      'Failed to generate unique purchase record code',
+    );
   }
 }

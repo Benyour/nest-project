@@ -134,9 +134,8 @@ describe('PurchaseRecords (e2e)', () => {
   it('should create, update, confirm purchase record and update stock', async () => {
     const createResponse = await agent
       .post('/purchase-records')
+      .set('x-user-id', user.id)
       .send({
-        code: 'PO-E2E-01',
-        createdById: user.id,
         purchaseDate: '2025-01-01',
         storeName: 'Costco',
         items: [
@@ -154,9 +153,11 @@ describe('PurchaseRecords (e2e)', () => {
       createResponse.body as ApiResponse<PurchaseRecordPayload>;
     expect(createBody.success).toBe(true);
     expect(createBody.data.status).toBe('draft');
+    expect(createBody.data.code).toMatch(/^PR-\d{8}-[A-Z0-9]{6}$/);
 
     const updateResponse = await agent
       .patch(`/purchase-records/${createBody.data.id}`)
+      .set('x-user-id', user.id)
       .send({
         storeName: 'Sam Club',
         items: [
@@ -176,7 +177,8 @@ describe('PurchaseRecords (e2e)', () => {
 
     const confirmResponse = await agent
       .post(`/purchase-records/${createBody.data.id}/confirm`)
-      .send({ confirmedById: user.id })
+      .set('x-user-id', user.id)
+      .send({})
       .expect(200);
 
     const confirmBody =

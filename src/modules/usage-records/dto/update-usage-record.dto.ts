@@ -7,7 +7,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
 } from 'class-validator';
 import {
   UsageRecordStatus,
@@ -45,9 +44,4 @@ export class UpdateUsageRecordDto {
   @ArrayMinSize(1)
   @Type(() => UsageRecordItemDto)
   items?: UsageRecordItemDto[];
-
-  @ApiPropertyOptional({ description: '调整创建人（特殊场景）' })
-  @IsOptional()
-  @IsUUID()
-  createdById?: string;
 }

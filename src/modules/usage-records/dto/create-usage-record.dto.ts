@@ -7,7 +7,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
 } from 'class-validator';
 import {
   UsageRecordStatus,
@@ -35,10 +34,6 @@ export class CreateUsageRecordDto {
   @IsOptional()
   @IsEnum(UsageRecordStatus)
   status?: UsageRecordStatus;
-
-  @ApiProperty({ description: '创建人用户 ID' })
-  @IsUUID()
-  createdById!: string;
 
   @ApiPropertyOptional({ description: '备注' })
   @IsOptional()
